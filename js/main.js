@@ -10,67 +10,54 @@ requirejs.config({
 });
 
 // Start the main app logic.
-requirejs(['domready', 'jquery', 'preparecanvas', 'seed', 'eachseed', 'modernizr',  'plugins', 'fullscreen'],
-function   (domReady,   $,        prepareCanvas,   seed,   eachseed) {
+requirejs(['domready', 'jquery', 'canvas',     'seed', 'each2DArray', 'config', 'modernizr',  'plugins', 'fullscreen'],
+function   (domReady,   $,        makeCanvas,   seed,   each2DArray,   CONF) {
 
     domReady(function () {
+        var 
+        lessWindow  = { x : 0, y : $('#menu').innerHeight() };
 
-        $('#gameoflife').fullscreen();
+        $('#gameoflife').fullscreen(lessWindow);
 
         var
         canvasEl    = $('#gameoflife'),
-        ctx         = prepareCanvas( canvasEl[0], "rgb(0,0,0)" ),
-        canvas      = { width: canvasEl.innerWidth(), height: canvasEl.innerHeight() },
-        cell        = { width   : 8,
-                        height  : 8 },
-        speed       = 150,
-        seeds;
+        offset      = { x : 0, y : 0 },
+        canvas      = makeCanvas(canvasEl[0], {
+            color           : CONF.canvas.color,
+            backgroundColor : CONF.canvas.backgroundColor,
+            offset          : offset
+        }),
+        cellsize    = CONF.appearance.cell,
+        cellcount   = { x : Math.floor(canvas.width / cellsize.width),
+                        y : Math.floor(canvas.height / cellsize.height) },
+        speed       = CONF.appearance.speed,
+        population  = seed(cellcount.x, cellcount.y),
+        game;
 
-        cell.x      = Math.floor(canvas.width / cell.width);
-        cell.y      = Math.floor(canvas.height / cell.height);
-
-        seeds       = seed(cell.x, cell.y);
-
-        eachseed(seeds, function(s){
-            if (s.alive){
-                ctx.fillRect(s.x*cell.width,
-                             s.y*cell.height,
-                             cell.width,
-                             cell.height
-                );
-            }
+        each2DArray(population, function(cell){
+            cell.draw(cellsize, offset, canvas.ctx);
         });
 
-        setInterval(function(){
-                // Refresh the canvas.
-                canvasEl[0].width = canvasEl[0].width;
+        game = setInterval(function(){
+            canvas.clear();
+            each2DArray(population, function(cell){
 
-            eachseed(seeds, function(s){
+                // 1. Any live cellsize with fewer than two live neighbours dies, as if caused by under-population.
+                // 2. Any live cellsize with two or three live neighbours lives on to the next generation.
+                // 3. Any live cellsize with more than three live neighbours dies, as if by overcrowding.
+                // 4. Any dead cellsize with exactly three live neighbours becomes a live cellsize, as if by reproduction.
+                var liveNeighbours = cell.livingNeighbours(population, true).length;
 
-                var liveNeighbours = s.livingNeighbours(seeds, true).length;
+                // 1 & 3
+                if (cell.alive && CONF.game.starve(liveNeighbours) ){
+                    cell.alive = false;
 
-                if (s.alive){
-
-                    // 1. Any live cell with fewer than two live neighbours dies, as if caused by under-population.
-                    // 3. Any live cell with more than three live neighbours dies, as if by overcrowding.
-                    if (liveNeighbours < 2
-                    ||  liveNeighbours > 3){
-                        s.alive = false;
-                    }
-                } else {
-                    // 4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-                    if (liveNeighbours === 3){
-                        s.alive = true;
-                    }
+                // 4
+                } else if (!cell.alive && CONF.game.resurrect(liveNeighbours)){
+                    cell.alive = true;
                 }
 
-                if (s.alive){
-                    ctx.fillRect(s.x*cell.width,
-                                 s.y*cell.height,
-                                 cell.width,
-                                 cell.height
-                    );
-                }
+                cell.draw(cellsize, offset, canvas.ctx);
             });
 
         }, speed);

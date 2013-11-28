@@ -1,15 +1,15 @@
-$.fn.fullscreen = function() {
+$.fn.fullscreen = function(lessWindow) {
 
 	var elements = this;
 
-	var fullscreen = function(){
+	var fullscreen = function(lessWindow){
 		$.each(elements, function(index, element){
-			$(element).attr('width', $(window).innerWidth() )
-                   	  .attr('height', $(window).innerHeight() );
+			$(element).attr('width', $(window).innerWidth() - lessWindow.x )
+                   	  .attr('height', $(window).innerHeight() - lessWindow.y );
 		});
 	};
 
-	fullscreen();
-	$(window).resize(function(){ fullscreen(); });
+	fullscreen(lessWindow);
+	$(window).resize(function(){ fullscreen(lessWindow); });
 
 };

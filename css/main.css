@@ -98,6 +98,17 @@ textarea {
    Author's custom styles
    ========================================================================== */
 
+.fixed{
+    width: 100%;
+
+}
+.bar{
+    text-align: center;
+    box-shadow: 0 0 2rem 0 rgba(0,0,0,0.25);
+    line-height: 3rem;
+}
+.centred{
+}
 
 
 
