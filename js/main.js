@@ -15,7 +15,7 @@ function   (domReady,   $,        makeCanvas,   seed,   each2DArray,   CONF) {
 
     domReady(function () {
         var 
-        lessWindow  = { x : 0, y : $('#menu').innerHeight() };
+        lessWindow  = { x : 0, y : 0 };
 
         $('#gameoflife').fullscreen(lessWindow);
 
@@ -61,6 +61,15 @@ function   (domReady,   $,        makeCanvas,   seed,   each2DArray,   CONF) {
             });
 
         }, speed);
+
+        $(window).on('click.stopGame', function(){
+            clearInterval(game);
+
+            var div     = $('<div />').attr('id', 'init-game').addClass('modal fixed').appendTo('body'),
+                child   = $('<div />').text('Hello!').appendTo(div);
+
+            $(window).off('click.stopGame');
+        });
 
     });
 
