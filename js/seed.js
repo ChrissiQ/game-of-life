@@ -1,6 +1,6 @@
-define(['jquery', 'cell'],
+define(['jquery', 'cell', 'config'],
 
-    function($, cell){
+    function($, cell,      CONF){
 
         return function(x, y){
             var population = [];
@@ -11,7 +11,7 @@ define(['jquery', 'cell'],
                     population[countx][county] = cell(
                         countx,
                         county,
-                        Math.round(Math.random() * 0.6) === 1 ? true : false
+                        Math.round(Math.random() * (CONF.seed.density + 0.5)) === 1 ? true : false
                     );
                 }
             }

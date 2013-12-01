@@ -1,6 +1,6 @@
-define(['jquery'],
+define(['jquery', 'each2darray', 'config'],
 
-    function($){
+    function($,    each2DArray,   CONF){
 
         return function(element, options){
 
@@ -14,18 +14,24 @@ define(['jquery'],
 
                 ctx.fillStyle = color;
             };
-            clear(ctx, element, options.color, options.backgroundColor);
+            clear(ctx, element, CONF.canvas.color, CONF.canvas.backgroundColor);
 
             return {
 
                 element         : element,
-                width           : options.offset.x + element.width,
-                height          : options.offset.y + element.height,
+                width           : element.width,
+                height          : element.height,
                 ctx             : ctx,
-                color           : options.color             || "rgb(0,0,0)",
-                backgroundColor : options.backgroundColor   || "rgb(255,255,255)",
+                color           : CONF.canvas.color             || "rgb(0,0,0)",
+                backgroundColor : CONF.canvas.backgroundColor   || "rgb(255,255,255)",
                 clear: function(){
                     clear(this.ctx, this.element, this.color, this.backgroundColor);
+                },
+                draw: function(population){
+                    var canvas = this.ctx;
+                    each2DArray(population, function(cell){
+                        cell.draw(CONF.appearance.cell, canvas);
+                    });
                 }
 
             }; // return object

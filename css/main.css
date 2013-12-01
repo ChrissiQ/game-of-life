@@ -124,9 +124,36 @@ textarea {
 }
 .gameoflife{
 }
+.config{
+    width: 15rem;
+    background-color: white;
+    float: left;
+}
+.config input.smallNumber{
+    width: 4rem;
+}
+.config label{
+    display: inline-block;
+    width: 6rem;
+}
+.config button{
+    width: 6rem;
+    line-height: 2rem;
+    margin: 0.25rem;
+}
+.config button.start{
+    background-color: green;
+}
+.config button.stop{
+    background-color: red;
+}
+.config > div{
+    margin: 0.25rem;
+}
 
-
-
+canvas{
+    user-select: none;
+}
 
 
 

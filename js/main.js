@@ -10,85 +10,160 @@ requirejs.config({
 });
 
 // Start the main app logic.
-requirejs(['domready', 'jquery', 'canvas',     'seed', 'each2DArray', 'config', 'cell',     'modernizr',  'plugins', 'fullscreen'],
-function   (domReady,   $,        makeCanvas,   seed,   each2DArray,   CONF,    createcell) {
+requirejs(['domready', 'jquery', 'canvas',     'seed', 'config', 'step', 'each2darray', 'modernizr',  'plugins', 'fullscreen'],
+function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2DArray) {
 
     domReady(function () {
-        var 
-        lessWindow  = { x : 0, y : 0 };
 
+        // set up window
+        var lessWindow  = { x : $('#config').innerWidth(), y : 0 };
         $('#gameoflife').fullscreen(lessWindow);
 
+        // set up game variables
         var
         canvasEl    = $('#gameoflife'),
-        offset      = { x : 0, y : 0 },
-        canvas      = makeCanvas(canvasEl[0], {
-            color           : CONF.canvas.color,
-            backgroundColor : CONF.canvas.backgroundColor,
-            offset          : offset
-        }),
+        ui     = {
+            run     : $('button#run'),
+            reset   : $('button#reset'),
+            step    : $('button#step'),
+            clear   : $('button#clear'),
+            speed   : $('input#speed'),
+            size    : $('input#size'),
+            density : $('input#density')
+        },
+        canvas      = makeCanvas(canvasEl[0]),
         cellsize    = CONF.appearance.cell,
         cellcount   = { x : Math.floor(canvas.width / cellsize.width),
                         y : Math.floor(canvas.height / cellsize.height) },
-        speed       = CONF.appearance.speed,
         population  = seed(cellcount.x, cellcount.y),
-        game;
+        speed       = function(){ return CONF.appearance.speed; },
+        game        = {
+            running : false,
+            run     : function(){
+                if (game.running){
+                    population = step(population);
+                    canvas.clear();
+                    canvas.draw(population); 
+                }
+            }
 
-        each2DArray(population, function(cell){
-            cell.draw(cellsize, offset, canvas.ctx);
+        };
+        drawing     = false;
+        lastDrawn   = { x : -1, y : -1 };
+
+        game.runner = setInterval(game.run, speed());
+
+        function fixButton(){
+            if (game.running){
+                ui.run.text('Stop');
+                ui.run.removeClass('start');
+                ui.run.addClass('stop');
+            } else {
+                ui.run.text('Run');
+                ui.run.removeClass('stop');
+                ui.run.addClass('start');
+            }
+        }
+
+        // show start random generation
+        canvas.draw(population);
+
+        ui.size.val(    cellsize.width);
+        ui.speed.val(   CONF.appearance.speed);
+        ui.density.val( CONF.seed.density);
+
+        // trigger game start by clicking
+        ui.run.on('click.runGame', function(){
+            game.running = !game.running;
+            fixButton();
         });
 
-        game = setInterval(function(){
-
-            var newpopulation = [],
-                liveNeighbours;
-
-            each2DArray(population, function(cell){
-
-                // 1. Any live cell with fewer than two live neighbours dies, as if caused by under-population.
-                // 2. Any live cell with two or three live neighbours lives on to the next generation.
-                // 3. Any live cell with more than three live neighbours dies, as if by overcrowding.
-                // 4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
-                liveNeighbours = cell.livingNeighbours(population, true).length;
-
-                newpopulation[cell.x][cell.y] = createcell(cell.x, cell.y, false);
-
-                // 1 & 3
-                if (cell.alive && CONF.game.starve(liveNeighbours) ){
-                    newpopulation[cell.x][cell.y].alive = false;
-
-                // 4
-                } else if (!cell.alive && CONF.game.resurrect(liveNeighbours)){
-                    newpopulation[cell.x][cell.y].alive = true;
-
-                // 2
-                } else {
-                    newpopulation[cell.x][cell.y].alive = cell.alive;
-                }
-
-            }, function(row, index){
-                newpopulation[index] = [];
-            });
-
-            population = newpopulation;
-
-            // re-draw
+        ui.reset.on('click.resetGame', function(){
+            game.running = false;
+            fixButton();
+            population  = seed(cellcount.x, cellcount.y);
             canvas.clear();
+            canvas.draw(population);
+        });
+
+        ui.step.on('click.stepGame', function(){
+            game.running = false;
+            fixButton();
+            population = step(population);
+            canvas.clear();
+            canvas.draw(population);
+        });
+
+        ui.size.on('change.changeSize', function(event){
+            CONF.appearance.cell.width = $(this).val();
+            CONF.appearance.cell.height = $(this).val();
+            cellsize = CONF.appearance.cell;
+            cellcount   = { x : Math.floor(canvas.width / cellsize.width),
+                            y : Math.floor(canvas.height / cellsize.height) };
+            canvas.clear();
+            canvas.draw(population);
+        });
+
+        ui.speed.on('change.changeSpeed', function(event){
+            clearInterval(game.runner);
+            CONF.appearance.speed   = $(this).val();
+            game.runner = setInterval(game.run, speed());
+        });
+
+        ui.density.on('change.changeDensity', function(event){
+            console.log(CONF.seed.density);
+            console.log($(this).val());
+            CONF.seed.density = parseFloat($(this).val());
+        });
+
+        ui.clear.on('click.clearGame', function(event){
+            game.running = false;
+            fixButton();
             each2DArray(population, function(cell){
-
-                cell.draw(cellsize, offset, canvas.ctx);
-
+                cell.alive = false;
             });
+            canvas.clear();
+            canvas.draw(population);
+        });
 
-        }, speed);
+        $(canvas.element).on('mousedown.drawCanvas', function(event){
 
-        $(window).on('click.stopGame', function(){
-            clearInterval(game);
+            drawing = true;
+            var x = Math.floor(event.offsetX / cellsize.width),
+                y = Math.floor(event.offsetY / cellsize.height);
+            population[x][y].alive = !population[x][y].alive;
+            canvas.clear();
+            canvas.draw(population);
+            lastDrawn = { x: x, y: y };
 
-            var div     = $('<div />').attr('id', 'init-game').addClass('modal fixed').appendTo('body'),
-                child   = $('<div />').text('Hello!').appendTo(div);
+            unselectable(canvas.element);
+        });
 
-            $(window).off('click.stopGame');
+        $(canvas.element).on('mousemove', function(event){
+
+            if (drawing){
+                var x = Math.floor(event.offsetX / cellsize.width),
+                    y = Math.floor(event.offsetY / cellsize.height);
+
+                // If the last thing drawn was not this one
+
+                if (lastDrawn.x !== x || lastDrawn.y !== y){
+
+                    //between({x:x,y:y}, {lastDrawn}).foreach(function(element, index, array){
+                        population[x][y].alive = !population[x][y].alive;
+                    //});
+                    canvas.clear();
+                    canvas.draw(population);
+
+                    lastDrawn = { x: x, y: y };
+                }
+            }
+
+        });
+
+        $(window).on('mouseup', function(event){
+            drawing = false;
+            lastDrawn = { x : -1, y : -1 };
         });
 
     });

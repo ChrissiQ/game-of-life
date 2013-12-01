@@ -18,7 +18,28 @@
             <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
         <![endif]-->
 
-        <div id="menu" class="fixed bar"><div>Conway's game of life!</div></div>
+        <div id="config" class="config">
+            <div>
+                <button name="run" id="run" class="start">Run</button>
+                <button name="step" id="step">Step</button>
+                <button name="clear" id="clear">Clear</button>
+            </div>
+            <div>
+                <label for="speed">Speed</label>
+                <input name="speed" id="speed" class="smallNumber" type="number"></input>
+            </div>
+            <div>
+                <label for="size">Block size</label>
+                <input name="size" id="size" class="smallNumber" type="number"></input>
+            </div>
+            <div>
+                <label for="density">Density</label>
+                <input name="density" id="density" class="smallNumber" type="number" step="0.001"></input>
+            </div>
+            <div>
+                <button name="reset" id="reset">Reset</button>
+            </div>
+        </div>
         <canvas id="gameoflife" class="gameoflife"></canvas>
 
         <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->

@@ -48,10 +48,10 @@ define(['jquery'],
                     return neighbours;
                 },
 
-                draw : function(size, offset, ctx) {
+                draw : function(size, ctx) {
                     if (this.alive){
-                        ctx.fillRect(offset.x + this.x*size.width,
-                                     offset.y + this.y*size.height,
+                        ctx.fillRect(this.x*size.width,
+                                     this.y*size.height,
                                      size.width,
                                      size.height
                         );
