@@ -12,7 +12,7 @@ define(['jquery'],
                     width       : 20,
                     height      : 20
                 },
-                speed           : 1000
+                speed           : 200
             },
             game    : {
                 starve          : function(liveNeighbours) {
@@ -23,7 +23,7 @@ define(['jquery'],
                 }
             },
             seed    : {
-                density         : 0.025
+                density         : 0.1
             }
 
 
