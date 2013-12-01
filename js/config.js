@@ -9,10 +9,10 @@ define(['jquery'],
             },
             appearance          : {
                 cell            : {
-                    width       : 8,
-                    height      : 8
+                    width       : 20,
+                    height      : 20
                 },
-                speed           : 150
+                speed           : 100
             },
             game    : {
                 starve          : function(liveNeighbours) {

@@ -11,7 +11,7 @@ define(['jquery', 'cell'],
                     population[countx][county] = cell(
                         countx,
                         county,
-                        Math.round(Math.random()) === 1 ? true : false
+                        Math.round(Math.random() * 0.6) === 1 ? true : false
                     );
                 }
             }

@@ -10,8 +10,8 @@ requirejs.config({
 });
 
 // Start the main app logic.
-requirejs(['domready', 'jquery', 'canvas',     'seed', 'each2DArray', 'config', 'modernizr',  'plugins', 'fullscreen'],
-function   (domReady,   $,        makeCanvas,   seed,   each2DArray,   CONF) {
+requirejs(['domready', 'jquery', 'canvas',     'seed', 'each2DArray', 'config', 'cell',     'modernizr',  'plugins', 'fullscreen'],
+function   (domReady,   $,        makeCanvas,   seed,   each2DArray,   CONF,    createcell) {
 
     domReady(function () {
         var 
@@ -39,25 +39,45 @@ function   (domReady,   $,        makeCanvas,   seed,   each2DArray,   CONF) {
         });
 
         game = setInterval(function(){
-            canvas.clear();
+
+            var newpopulation = [],
+                liveNeighbours;
+
             each2DArray(population, function(cell){
 
-                // 1. Any live cellsize with fewer than two live neighbours dies, as if caused by under-population.
-                // 2. Any live cellsize with two or three live neighbours lives on to the next generation.
-                // 3. Any live cellsize with more than three live neighbours dies, as if by overcrowding.
-                // 4. Any dead cellsize with exactly three live neighbours becomes a live cellsize, as if by reproduction.
-                var liveNeighbours = cell.livingNeighbours(population, true).length;
+                // 1. Any live cell with fewer than two live neighbours dies, as if caused by under-population.
+                // 2. Any live cell with two or three live neighbours lives on to the next generation.
+                // 3. Any live cell with more than three live neighbours dies, as if by overcrowding.
+                // 4. Any dead cell with exactly three live neighbours becomes a live cell, as if by reproduction.
+                liveNeighbours = cell.livingNeighbours(population, true).length;
+
+                newpopulation[cell.x][cell.y] = createcell(cell.x, cell.y, false);
 
                 // 1 & 3
                 if (cell.alive && CONF.game.starve(liveNeighbours) ){
-                    cell.alive = false;
+                    newpopulation[cell.x][cell.y].alive = false;
 
                 // 4
                 } else if (!cell.alive && CONF.game.resurrect(liveNeighbours)){
-                    cell.alive = true;
+                    newpopulation[cell.x][cell.y].alive = true;
+
+                // 2
+                } else {
+                    newpopulation[cell.x][cell.y].alive = cell.alive;
                 }
 
+            }, function(row, index){
+                newpopulation[index] = [];
+            });
+
+            population = newpopulation;
+
+            // re-draw
+            canvas.clear();
+            each2DArray(population, function(cell){
+
                 cell.draw(cellsize, offset, canvas.ctx);
+
             });
 
         }, speed);
