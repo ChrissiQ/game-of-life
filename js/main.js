@@ -10,8 +10,8 @@ requirejs.config({
 });
 
 // Start the main app logic.
-requirejs(['domready', 'jquery', 'canvas',     'seed', 'config', 'step', 'each2darray', 'cell', 'modernizr',  'plugins', 'fullscreen'],
-function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2DArray,   newcell) {
+requirejs(['domready', 'jquery', 'canvas',     'seed', 'config', 'step', 'each2darray', 'cell',  'gametypes', 'modernizr',  'plugins', 'fullscreen'],
+function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2DArray,   newcell, gametypes) {
 
     domReady(function () {
 
@@ -21,7 +21,6 @@ function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2D
 
         // set up game variables
         var
-        canvasEl    = $('#gameoflife'),
         ui     = {
             run     : $('button#run'),
             reset   : $('button#reset'),
@@ -31,21 +30,40 @@ function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2D
             size    : $('input#size'),
             density : $('input#density')
         },
-        canvas      = makeCanvas(canvasEl[0]),
-        cellsize    = CONF.appearance.cell,
-        cellcount   = { x : Math.floor(canvas.width / cellsize.width),
-                        y : Math.floor(canvas.height / cellsize.height) },
-        population  = seed(cellcount.x, cellcount.y),
+        canvas      = makeCanvas($('#gameoflife')[0]),
+        cellsize    = function(){ return CONF.appearance.cell; },
+        cellcount   = { x : function(){ return Math.floor(canvas.width / cellsize().width); },
+                        y : function(){ return Math.floor(canvas.height / cellsize().height); }
+                      },
+        population  = seed(cellcount.x(), cellcount.y()),
         speed       = function(){ return CONF.appearance.speed; },
         game        = {
             running : false,
+            type    : gametypes.seed,
+
+            // the core running function of the game
             run     : function(){
                 if (game.running){
                     population = step(population);
-                    canvas.clear();
-                    canvas.draw(population); 
-                }
-            }
+                    canvas.draw(population); } },
+
+            // use game.togglerun() to toggle simulation running
+            togglerun: function(){
+                game.running ? game.stop() : game.start(); },
+
+            // use game.start() to start simulating
+            start   : function(){
+                game.running = true;
+                ui.run.text('Stop')
+                      .removeClass('start')
+                      .addClass('stop'); },
+
+            // use game.stop() to stop simulating
+            stop    : function(){
+                game.running = false;
+                ui.run.text('Run')
+                      .removeClass('stop')
+                      .addClass('start'); }
 
         };
         drawing     = false;
@@ -53,54 +71,39 @@ function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2D
 
         game.runner = setInterval(game.run, speed());
 
-        function fixButton(){
-            if (game.running){
-                ui.run.text('Stop');
-                ui.run.removeClass('start');
-                ui.run.addClass('stop');
-            } else {
-                ui.run.text('Run');
-                ui.run.removeClass('stop');
-                ui.run.addClass('start');
-            }
-        }
-
         // show start random generation
         canvas.draw(population);
 
-        ui.size.val(    cellsize.width);
+        ui.size.val(    cellsize().width);
         ui.speed.val(   CONF.appearance.speed);
         ui.density.val( CONF.seed.density);
 
         // trigger game start by clicking
         ui.run.on('click.runGame', function(){
-            game.running = !game.running;
-            fixButton();
+            game.togglerun();
         });
 
         ui.reset.on('click.resetGame', function(){
-            game.running = false;
-            fixButton();
-            population  = seed(cellcount.x, cellcount.y);
-            canvas.clear();
+
+            game.type = gametypes.seed;
+            game.stop();
+
+            population  = seed(cellcount.x(), cellcount.y());
             canvas.draw(population);
+
         });
 
         ui.step.on('click.stepGame', function(){
-            game.running = false;
-            fixButton();
+            game.stop();
+
             population = step(population);
-            canvas.clear();
             canvas.draw(population);
         });
 
         ui.size.on('change.changeSize', function(event){
-            CONF.appearance.cell.width = $(this).val();
+            CONF.appearance.cell.width  = $(this).val();
             CONF.appearance.cell.height = $(this).val();
-            cellsize = CONF.appearance.cell;
-            cellcount   = { x : Math.floor(canvas.width / cellsize.width),
-                            y : Math.floor(canvas.height / cellsize.height) };
-            canvas.clear();
+            canvas.resize(population, game.type, cellcount.x(), cellcount.y());
             canvas.draw(population);
         });
 
@@ -115,28 +118,28 @@ function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2D
         });
 
         ui.clear.on('click.clearGame', function(event){
-            game.running = false;
-            fixButton();
+            game.type = gametypes.blank;
+            game.stop();
             each2DArray(population, function(cell){
                 cell.alive = false;
             });
-            canvas.clear();
             canvas.draw(population);
         });
 
         $(canvas.element).on('mousedown.drawCanvas', function(event){
 
             drawing = true;
-            var x = Math.floor(event.offsetX / cellsize.width),
-                y = Math.floor(event.offsetY / cellsize.height);
+            var x = Math.floor(event.offsetX / cellsize().width),
+                y = Math.floor(event.offsetY / cellsize().height);
+
             if (!population[x]){
                 population[x] = [];
-                if (!population[x][y]){
-                    population[x][y] = newcell(x, y, false);
-                }
             }
+            if (!population[x][y]){
+                population[x][y] = newcell(x, y, false);
+            }
+
             population[x][y].alive = !population[x][y].alive;
-            canvas.clear();
             canvas.draw(population);
             lastDrawn = { x: x, y: y };
 
@@ -149,8 +152,8 @@ function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2D
                 FFY = event.originalEvent.layerY - event.currentTarget.offsetTop;
 
             if (drawing){
-                var x = Math.floor((event.offsetX||FFX) / cellsize.width),
-                    y = Math.floor((event.offsetY||FFY) / cellsize.height);
+                var x = Math.floor((event.offsetX||FFX) / cellsize().width),
+                    y = Math.floor((event.offsetY||FFY) / cellsize().height);
 
                 // If the last thing drawn was not this one
 
@@ -159,7 +162,6 @@ function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2D
                     //between({x:x,y:y}, {lastDrawn}).foreach(function(element, index, array){
                         population[x][y].alive = !population[x][y].alive;
                     //});
-                    canvas.clear();
                     canvas.draw(population);
 
                     lastDrawn = { x: x, y: y };

@@ -28,6 +28,6 @@ define(['jquery'],
 
 
 
-        } // return factory
+        }; // return factory
     }
 );

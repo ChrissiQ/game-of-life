@@ -1,6 +1,6 @@
-define(['jquery', 'each2darray', 'config'],
+define(['jquery', 'each2darray', 'config', 'gametypes', 'cell'],
 
-    function($,    each2DArray,   CONF){
+    function($,    each2DArray,   CONF,     gametypes,   newcell){
 
         return function(element, options){
 
@@ -29,10 +29,31 @@ define(['jquery', 'each2darray', 'config'],
                 },
                 draw: function(population){
                     var canvas = this.ctx;
+                    this.clear();
                     each2DArray(population, function(cell){
                         cell.draw(CONF.appearance.cell, canvas);
                     });
-                }
+                },
+                resize: function(population, type, x, y){
+
+                    for (var eachX = 0; eachX <= x; eachX++){
+                        if (!population[eachX]) population[eachX] = [];
+                        for (var eachY = 0; eachY <= y; eachY++){
+                            if (!population[eachX][eachY]){
+
+                                var alive = false;
+                                if (type === gametypes.seed){
+                                    alive = population.calculateAlive();
+                                }
+                                if (!population[eachX][eachY]){
+                                    population[eachX][eachY] = newcell(eachX,eachY,alive);
+                                }
+
+                            } // end if population[x][y] doesn't exist
+                        } // end column loop
+                    } // end row loop
+
+                } // end resize
 
             }; // return object
 
