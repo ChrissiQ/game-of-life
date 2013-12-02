@@ -111,8 +111,6 @@ function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2D
         });
 
         ui.density.on('change.changeDensity', function(event){
-            console.log(CONF.seed.density);
-            console.log($(this).val());
             CONF.seed.density = parseFloat($(this).val());
         });
 
@@ -127,8 +125,6 @@ function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2D
         });
 
         $(canvas.element).on('mousedown.drawCanvas', function(event){
-
-            console.log("Mousedown!");
 
             drawing = true;
             var x = Math.floor(event.offsetX / cellsize.width),
@@ -155,7 +151,6 @@ function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2D
             if (drawing){
                 var x = Math.floor((event.offsetX||FFX) / cellsize.width),
                     y = Math.floor((event.offsetY||FFY) / cellsize.height);
-                console.log("Mousemove!",event,event.offsetX||FFX,event.offsetY||FFY);
 
                 // If the last thing drawn was not this one
 
