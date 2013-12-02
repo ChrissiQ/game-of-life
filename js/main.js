@@ -10,8 +10,8 @@ requirejs.config({
 });
 
 // Start the main app logic.
-requirejs(['domready', 'jquery', 'canvas',     'seed', 'config', 'step', 'each2darray', 'modernizr',  'plugins', 'fullscreen'],
-function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2DArray) {
+requirejs(['domready', 'jquery', 'canvas',     'seed', 'config', 'step', 'each2darray', 'cell', 'modernizr',  'plugins', 'fullscreen'],
+function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2DArray,   newcell) {
 
     domReady(function () {
 
@@ -128,22 +128,34 @@ function   (domReady,   $,        makeCanvas,   seed,   CONF,     step,   each2D
 
         $(canvas.element).on('mousedown.drawCanvas', function(event){
 
+            console.log("Mousedown!");
+
             drawing = true;
             var x = Math.floor(event.offsetX / cellsize.width),
                 y = Math.floor(event.offsetY / cellsize.height);
+            if (!population[x]){
+                population[x] = [];
+                if (!population[x][y]){
+                    population[x][y] = newcell(x, y, false);
+                }
+            }
             population[x][y].alive = !population[x][y].alive;
             canvas.clear();
             canvas.draw(population);
             lastDrawn = { x: x, y: y };
 
-            unselectable(canvas.element);
+            //unselectable(canvas.element);
         });
 
         $(canvas.element).on('mousemove', function(event){
 
+            var FFX = event.originalEvent.layerX - event.currentTarget.offsetLeft,
+                FFY = event.originalEvent.layerY - event.currentTarget.offsetTop;
+
             if (drawing){
-                var x = Math.floor(event.offsetX / cellsize.width),
-                    y = Math.floor(event.offsetY / cellsize.height);
+                var x = Math.floor((event.offsetX||FFX) / cellsize.width),
+                    y = Math.floor((event.offsetY||FFY) / cellsize.height);
+                console.log("Mousemove!",event,event.offsetX||FFX,event.offsetY||FFY);
 
                 // If the last thing drawn was not this one
 
